@@ -11,6 +11,11 @@ CLOSING_BRACKETS = ")"
 
 precedence_dict = {KLEENE_OPERATOR: 0, CONCATENATION: 1, UNION_EXPRESSION: 2}
 
+# class State:
+#     def __init__(self) -> None:
+#         self.incoming = set()
+#         self.outGoing = set()
+
 
 class NFA:
     def __init__(self) -> None:
@@ -33,6 +38,10 @@ class NFA:
         self.states[0] = []
         self.num_states = 1
 
+    # CHANGE !!!!!!!!!!!!
+    # make starting node as one and 
+    # try to make ending node as one too 
+    
     def __or__(self, other):  # union
         # TODO simplify for two nodes
         new_accepting_states = set()
