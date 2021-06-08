@@ -11,6 +11,11 @@ CLOSING_BRACKETS = ")"
 
 precedence_dict = {KLEENE_OPERATOR: 0, CONCATENATION: 1, UNION_EXPRESSION: 2}
 
+
+def is_alpha(symbol: str):
+    return symbol.isalpha() or symbol.isdigit()
+
+
 # class State:
 #     def __init__(self) -> None:
 #         self.incoming = set()
@@ -39,9 +44,9 @@ class NFA:
         self.num_states = 1
 
     # CHANGE !!!!!!!!!!!!
-    # make starting node as one and 
-    # try to make ending node as one too 
-    
+    # make starting node as one and
+    # try to make ending node as one too
+
     def __or__(self, other):  # union
         # TODO simplify for two nodes
         new_accepting_states = set()
@@ -156,7 +161,7 @@ def convert_postfix_notation_to_NFA(postfix_queue: List):
     NFA_stack = []
 
     for symbol in postfix_queue:
-        if symbol.isalpha():
+        if is_alpha(symbol):
             tmp = NFA()
             tmp.construct_symbol_nfa(symbol)
             NFA_stack.append(tmp)
@@ -199,7 +204,7 @@ def convert_regex_to_postfix_notation(regex: str) -> List:
     operators_stack: List[str] = []
     next_operator_concat = False
     for symbol in regex:
-        if symbol.isalpha():
+        if is_alpha(symbol):
             if next_operator_concat:
                 append_operator_to_stack(operators_stack, result_queue, CONCATENATION)
             else:
