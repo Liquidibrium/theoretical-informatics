@@ -25,29 +25,43 @@ def is_alpha(symbol: str):
 class NFA:
     def __init__(self) -> None:
         self.accepting_states: set[int] = set()
-        self.states: dict[int, Tuple[str, int]] = dict()  # { state:[(symbol,state),] }
+        self.states: dict[int, List[Tuple[str, int]]] = dict()  # { state:[(symbol,state),] }
         self.num_states = 0
         self.index = 0
+        self.simple_nfa = False
 
     # TODO make class method
-    def construct_symbol_nfa(self, symbol):
+    def construct_symbol_nfa(self, symbol: str):
         self.states[self.index] = [(symbol, self.index + 1)]
         self.index += 1
         self.states[self.index] = []
         self.accepting_states.add(self.index)
         self.num_states = 2
+        self.simple_nfa = True
 
     # TODO make class method
     def construct_empty_nfa(self):
         self.accepting_states.add(self.index)
         self.states[0] = []
         self.num_states = 1
+        # self.simple_nfa = True
+
+    def __or__(self, other):
+        if self.simple_nfa and other.simple_nfa:
+            new_nfa = NFA()
+            new_nfa.accepting_states = deepcopy(self.accepting_states)
+            new_nfa.states = deepcopy(self.states)
+            new_nfa.num_states = 2
+            new_nfa.states[0].extend(other.states[0])
+            return new_nfa
+        else:
+            return self.union(other)
 
     # CHANGE !!!!!!!!!!!!
     # make starting node as one and
     # try to make ending node as one too
 
-    def __or__(self, other):  # union
+    def union(self, other):  # union
         # TODO simplify for two nodes
         new_accepting_states = set()
         new_states = dict()
@@ -115,9 +129,7 @@ class NFA:
         for state, edges in other.states.items():
             if state == 0:
                 continue
-            new_states[state + self.num_states - 1] = [
-                (edge[0], edge[1] + self.num_states - 1) for edge in edges
-            ]
+            new_states[state + self.num_states - 1] = [(edge[0], edge[1] + self.num_states - 1) for edge in edges]
 
         for other_accepting_state in other.accepting_states:
             new_accepting_states.add(other_accepting_state + self.num_states - 1)
@@ -147,11 +159,11 @@ class NFA:
             num_edges += curr_num_edges
             transitions.append(
                 f"{curr_num_edges} "
-                + " ".join(map(lambda tuple: f"{tuple[0]} {tuple[1]}", edges))
+                + " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges))
             )
         res_trans = "\n".join(transitions)
         res = f"""{self.num_states} {len(self.accepting_states)} {num_edges}
-{' '.join(map(str,self.accepting_states))}
+{' '.join(map(str, self.accepting_states))}
 {res_trans}
 """
         return res
@@ -184,26 +196,24 @@ def convert_postfix_notation_to_NFA(postfix_queue: List):
     return NFA_stack.pop()
 
 
-def append_operator_to_stack(
-    operators_stack: List, result_queue: List, operator: str
-) -> None:
+def append_operator_to_stack(operators_stack: List,
+                             result_queue: List,
+                             operator: str) -> None:
     curr_precedence = precedence_dict[operator]
     while True:
-        if (
-            not operators_stack
-            or operators_stack[-1] == OPENING_BRACKETS
-            or precedence_dict[operators_stack[-1]] > curr_precedence
-        ):
+        if (not operators_stack
+                or operators_stack[-1] == OPENING_BRACKETS
+                or precedence_dict[operators_stack[-1]] > curr_precedence):
             operators_stack.append(operator)
             break
         result_queue.append(operators_stack.pop())
 
 
-def convert_regex_to_postfix_notation(regex: str) -> List:
+def convert_regex_to_postfix_notation(reg_ex: str) -> List:
     result_queue: List[str] = []
     operators_stack: List[str] = []
     next_operator_concat = False
-    for symbol in regex:
+    for symbol in reg_ex:
         if is_alpha(symbol):
             if next_operator_concat:
                 append_operator_to_stack(operators_stack, result_queue, CONCATENATION)
@@ -239,12 +249,11 @@ def convert_regex_to_postfix_notation(regex: str) -> List:
 
 if __name__ == "__main__":
     while True:
-        regex = input("Input Regular Expresion: ")
+        regex = input("Input Regular Expression: ")
         if regex == "":
             print("Finished")
             break
         postfix_que = convert_regex_to_postfix_notation(
-            regex.replace(INPUTTED_SIGMA, PROGRAM_SIGMA)
-        )
+            regex.replace(INPUTTED_SIGMA, PROGRAM_SIGMA))
         nfa = convert_postfix_notation_to_NFA(postfix_que)
         print(nfa)
