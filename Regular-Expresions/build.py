@@ -25,6 +25,7 @@ def is_alpha(symbol: str):
 class NFA:
     def __init__(self) -> None:
         self.accepting_states: set[int] = set()
+        # TODO change with set
         self.states: dict[int, List[Tuple[str, int]]] = dict()  # { state:[(symbol,state),] }
         self.num_states = 0
         self.index = 0
@@ -60,50 +61,36 @@ class NFA:
     # CHANGE !!!!!!!!!!!!
     # make starting node as one and
     # try to make ending node as one too
-
     def union(self, other):  # union
         # TODO simplify for two nodes
-        new_accepting_states = set()
-        new_states = dict()
+        new_nfa = NFA()
+        new_nfa.states = deepcopy(self.states)
+        new_nfa.accepting_states = deepcopy(self.accepting_states)
+        new_nfa.num_states = self.num_states - 1
 
-        new_num_states = self.num_states + 1
-
-        start_state_edges = []
-
-        start_state_edges.extend(
+        new_nfa.states[0].extend(
             [  # symbol , state + self.number of state +1
-                (edge[0], edge[1] + 1) for edge in self.states[0]
-            ]
-        )
-        start_state_edges.extend(
-            [  # symbol , state + self.number of state +1
-                (edge[0], edge[1] + new_num_states) for edge in other.states[0]
+                (edge[0], edge[1] + new_nfa.num_states) for edge in other.states[0]
             ]
         )
 
-        new_states[0] = start_state_edges
-
-        for self_accepting_state in self.accepting_states:
-            new_accepting_states.add(self_accepting_state + 1)
         for other_accepting_state in other.accepting_states:
-            new_accepting_states.add(other_accepting_state + new_num_states)
-
-        for state, edges in self.states.items():
-            new_states[state + 1] = [(edge[0], edge[1] + 1) for edge in edges]
+            if other_accepting_state == 0:
+                new_nfa.accepting_states.add(other_accepting_state)
+            else:
+                new_nfa.accepting_states.add(other_accepting_state + new_nfa.num_states)
 
         for state, edges in other.states.items():
-            new_states[state + new_num_states] = [
-                (edge[0], edge[1] + new_num_states) for edge in edges
-            ]
-        new_num_states += other.num_states
-        new_nfa = NFA()
-        new_nfa.accepting_states = new_accepting_states
-        new_nfa.states = new_states
-        new_nfa.num_states = new_num_states
+            if state == 0:
+                continue
+            new_nfa.states[state + new_nfa.num_states] = [
+                (edge[0], edge[1] + new_nfa.num_states) for edge in edges]
+        new_nfa.num_states += other.num_states
+
         return new_nfa
 
     def __mul__(self, _):  # star
-        # TODO simplify
+        # TODO epsilon
         new_nfa = NFA()
         new_nfa.accepting_states = deepcopy(self.accepting_states)
         new_nfa.accepting_states.add(0)
@@ -116,28 +103,22 @@ class NFA:
 
     def __add__(self, other):  # concatenation
         # TODO simplify if needed
-        new_accepting_states = set()
-        new_states = deepcopy(self.states)
-
-        first_edges = [
-            (edge[0], edge[1] + self.num_states - 1) for edge in other.states[0]
-        ]
+        new_nfa = NFA()
+        new_nfa.states = deepcopy(self.states)
+        first_edges = [(edge[0], edge[1] + self.num_states - 1) for edge in other.states[0]]
 
         for self_ac_state in self.accepting_states:
-            new_states[self_ac_state].extend(first_edges)
+            new_nfa.states[self_ac_state].extend(first_edges)
 
         for state, edges in other.states.items():
             if state == 0:
                 continue
-            new_states[state + self.num_states - 1] = [(edge[0], edge[1] + self.num_states - 1) for edge in edges]
+            new_nfa.states[state + self.num_states - 1] = [(edge[0], edge[1] + self.num_states - 1) for edge in edges]
 
         for other_accepting_state in other.accepting_states:
-            new_accepting_states.add(other_accepting_state + self.num_states - 1)
+            new_nfa.accepting_states.add(other_accepting_state + self.num_states - 1)
 
-        new_nfa = NFA()
-        new_nfa.accepting_states = new_accepting_states
-        new_nfa.states = new_states
-        assert self.num_states + other.num_states - 1 == len(new_states)
+        assert self.num_states + other.num_states - 1 == len(new_nfa.states)
         new_nfa.num_states = self.num_states + other.num_states - 1
         return new_nfa
 
@@ -159,8 +140,7 @@ class NFA:
             num_edges += curr_num_edges
             transitions.append(
                 f"{curr_num_edges} "
-                + " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges))
-            )
+                + " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges)))
         res_trans = "\n".join(transitions)
         res = f"""{self.num_states} {len(self.accepting_states)} {num_edges}
 {' '.join(map(str, self.accepting_states))}
