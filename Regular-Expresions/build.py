@@ -26,16 +26,16 @@ class NFA:
     def __init__(self) -> None:
         self.accepting_states: set[int] = set()
         # TODO change with set
-        self.states: dict[int, List[Tuple[str, int]]] = dict()  # { state:[(symbol,state),] }
+        self.states: dict[int, set[Tuple[str, int]]] = dict()  # { state:[(symbol,state),] }
         self.num_states = 0
         self.index = 0
         self.simple_nfa = False
 
     # TODO make class method
     def construct_symbol_nfa(self, symbol: str):
-        self.states[self.index] = [(symbol, self.index + 1)]
+        self.states[self.index] = {(symbol, self.index + 1)}
         self.index += 1
-        self.states[self.index] = []
+        self.states[self.index] = set()
         self.accepting_states.add(self.index)
         self.num_states = 2
         self.simple_nfa = True
@@ -43,7 +43,7 @@ class NFA:
     # TODO make class method
     def construct_empty_nfa(self):
         self.accepting_states.add(self.index)
-        self.states[0] = []
+        self.states[0] = set()
         self.num_states = 1
         # self.simple_nfa = True
 
@@ -53,7 +53,7 @@ class NFA:
             new_nfa.accepting_states = deepcopy(self.accepting_states)
             new_nfa.states = deepcopy(self.states)
             new_nfa.num_states = 2
-            new_nfa.states[0].extend(other.states[0])
+            new_nfa.states[0].update(other.states[0])
             return new_nfa
         else:
             return self.union(other)
@@ -68,7 +68,7 @@ class NFA:
         new_nfa.accepting_states = deepcopy(self.accepting_states)
         new_nfa.num_states = self.num_states - 1
 
-        new_nfa.states[0].extend(
+        new_nfa.states[0].update(
             [  # symbol , state + self.number of state +1
                 (edge[0], edge[1] + new_nfa.num_states) for edge in other.states[0]
             ]
@@ -83,8 +83,8 @@ class NFA:
         for state, edges in other.states.items():
             if state == 0:
                 continue
-            new_nfa.states[state + new_nfa.num_states] = [
-                (edge[0], edge[1] + new_nfa.num_states) for edge in edges]
+            new_nfa.states[state + new_nfa.num_states] = set([
+                (edge[0], edge[1] + new_nfa.num_states) for edge in edges])
         new_nfa.num_states += other.num_states
 
         return new_nfa
@@ -98,7 +98,7 @@ class NFA:
         new_nfa.num_states = self.num_states
 
         for state in self.accepting_states:
-            new_nfa.states[state].extend(self.states[0])
+            new_nfa.states[state].update(self.states[0])
         return new_nfa
 
     def __add__(self, other):  # concatenation
@@ -108,12 +108,13 @@ class NFA:
         first_edges = [(edge[0], edge[1] + self.num_states - 1) for edge in other.states[0]]
 
         for self_ac_state in self.accepting_states:
-            new_nfa.states[self_ac_state].extend(first_edges)
+            new_nfa.states[self_ac_state].update(first_edges)
 
         for state, edges in other.states.items():
             if state == 0:
                 continue
-            new_nfa.states[state + self.num_states - 1] = [(edge[0], edge[1] + self.num_states - 1) for edge in edges]
+            new_nfa.states[state + self.num_states - 1] = set(
+                [(edge[0], edge[1] + self.num_states - 1) for edge in edges])
 
         for other_accepting_state in other.accepting_states:
             new_nfa.accepting_states.add(other_accepting_state + self.num_states - 1)
