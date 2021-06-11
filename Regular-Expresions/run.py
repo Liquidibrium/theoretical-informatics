@@ -36,7 +36,7 @@ def translate_inputted_text() -> tuple[dict[str, list[(int, int), ...]], int]:
 def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: int) -> str:
     result_list: list[str, ...] = []
     current_state: int = 1  # initial state 0 , (1 << 0)
-    index: int = len(string)
+    # index: int = len(string)
     for index, symbol in enumerate(string):
         edges: list[(int, int), ...] = symbols.get(symbol)
         if edges:
@@ -52,7 +52,7 @@ def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: in
                 # print("N")
                 result_list.append("N")
         else:
-            result_list.append("N" * (len(string) - index - 1))
+            result_list.append("N" * (len(string) - index))
             break
     # print("len ", len(string), index)
     return "".join(result_list)
