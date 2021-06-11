@@ -52,10 +52,9 @@ def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: in
                 # print("N")
                 result_list.append("N")
         else:
+            result_list.append("N" * (len(string) - index - 1))
             break
-
     # print("len ", len(string), index)
-    result_list.append("N" * (len(string) - index))
     return "".join(result_list)
 
 
