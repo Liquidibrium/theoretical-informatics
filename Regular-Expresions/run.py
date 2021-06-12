@@ -1,3 +1,5 @@
+#!/bin/python3.9
+
 from functools import reduce
 
 
@@ -59,7 +61,7 @@ def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: in
 
 
 def get_answer():
-    word = input("Input word: ")
+    word: str = input("Input word: ")
     if word == "":
         print("Finished")
         return
@@ -69,6 +71,6 @@ def get_answer():
 
 
 if __name__ == "__main__":
-    while True:
-        answer = get_answer()
-        print(answer)
+    # while True:
+    answer: str = get_answer()
+    print(answer)

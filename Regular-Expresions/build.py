@@ -1,3 +1,4 @@
+#!/bin/python3.9
 from typing import List, Tuple
 from copy import deepcopy
 
@@ -16,22 +17,14 @@ def is_alpha(symbol: str):
     return symbol.isalpha() or symbol.isdigit()
 
 
-# class State:
-#     def __init__(self) -> None:
-#         self.incoming = set()
-#         self.outGoing = set()
-
-
 class NFA:
     def __init__(self) -> None:
         self.accepting_states: set[int] = set()
-        # TODO change with set
         self.states: dict[int, set[Tuple[str, int]]] = dict()  # { state:[(symbol,state),] }
         self.num_states = 0
         self.index = 0
         self.simple_nfa = False
 
-    # TODO make class method
     def construct_symbol_nfa(self, symbol: str):
         self.states[self.index] = {(symbol, self.index + 1)}
         self.index += 1
@@ -40,14 +33,13 @@ class NFA:
         self.num_states = 2
         self.simple_nfa = True
 
-    # TODO make class method
     def construct_empty_nfa(self):
         self.accepting_states.add(self.index)
         self.states[0] = set()
         self.num_states = 1
         # self.simple_nfa = True
 
-    def __or__(self, other):
+    def __or__(self, other):  # union
         if self.simple_nfa and other.simple_nfa:
             new_nfa = NFA()
             new_nfa.accepting_states = deepcopy(self.accepting_states)
@@ -58,11 +50,7 @@ class NFA:
         else:
             return self.union(other)
 
-    # CHANGE !!!!!!!!!!!!
-    # make starting node as one and
-    # try to make ending node as one too
-    def union(self, other):  # union
-        # TODO simplify for two nodes
+    def union(self, other):
         new_nfa = NFA()
         new_nfa.states = deepcopy(self.states)
         new_nfa.accepting_states = deepcopy(self.accepting_states)
@@ -89,7 +77,7 @@ class NFA:
 
         return new_nfa
 
-    def __mul__(self, _):  # star
+    def __mul__(self, _):  # star / KLEENE OPERATOR
         # TODO epsilon
         new_nfa = NFA()
         new_nfa.accepting_states = deepcopy(self.accepting_states)
@@ -102,7 +90,6 @@ class NFA:
         return new_nfa
 
     def __add__(self, other):  # concatenation
-        # TODO simplify if needed
         new_nfa = NFA()
         new_nfa.states = deepcopy(self.states)
         first_edges = [(edge[0], edge[1] + self.num_states - 1) for edge in other.states[0]]
@@ -116,8 +103,11 @@ class NFA:
             new_nfa.states[state + self.num_states - 1] = set(
                 [(edge[0], edge[1] + self.num_states - 1) for edge in edges])
 
-        for other_accepting_state in other.accepting_states:
-            new_nfa.accepting_states.add(other_accepting_state + self.num_states - 1)
+        for other_accepting_state in other.accepting_states:  # 0 -> 1 ->2   0 - > 1
+            if other_accepting_state == 0:
+                new_nfa.accepting_states.update(self.accepting_states)
+            else:
+                new_nfa.accepting_states.add(other_accepting_state + self.num_states - 1)
 
         assert self.num_states + other.num_states - 1 == len(new_nfa.states)
         new_nfa.num_states = self.num_states + other.num_states - 1
@@ -130,7 +120,7 @@ class NFA:
     # Ai
     # Ki S Aj
     def __str__(self) -> str:
-        print(self.__repr__())
+        # print(self.__repr__())
         num_edges = 0
         transitions: List[str] = []
         prev = -1
@@ -225,16 +215,17 @@ def convert_regex_to_postfix_notation(reg_ex: str) -> List:
 
     while operators_stack:
         result_queue.append(operators_stack.pop())
+    # print(result_queue)
     return result_queue
 
 
 if __name__ == "__main__":
-    while True:
-        regex = input("Input Regular Expression: ")
-        if regex == "":
-            print("Finished")
-            break
-        postfix_que = convert_regex_to_postfix_notation(
-            regex.replace(INPUTTED_SIGMA, PROGRAM_SIGMA))
-        nfa = convert_postfix_notation_to_NFA(postfix_que)
-        print(nfa)
+    # while True:
+    regex = input("Input Regular Expression: ")
+    if regex == "":
+        print("Finished")
+    # break
+    postfix_que = convert_regex_to_postfix_notation(
+        regex.replace(INPUTTED_SIGMA, PROGRAM_SIGMA))
+    nfa = convert_postfix_notation_to_NFA(postfix_que)
+    print(nfa)
