@@ -134,7 +134,7 @@ class NFA:
                 + " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges)))
         res_trans = "\n".join(transitions)
         res = f"""{self.num_states} {len(self.accepting_states)} {num_edges}
-{' '.join(map(str, self.accepting_states))}
+{' '.join(map(str, sorted(self.accepting_states)))}
 {res_trans}
 """
         return res
@@ -215,7 +215,6 @@ def convert_regex_to_postfix_notation(reg_ex: str) -> List:
 
     while operators_stack:
         result_queue.append(operators_stack.pop())
-    # print(result_queue)
     return result_queue
 
 
