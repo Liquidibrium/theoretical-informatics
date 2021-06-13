@@ -1,6 +1,6 @@
 #!/bin/python3.9
-from typing import List, Tuple
 from copy import deepcopy
+from typing import List, Tuple
 
 KLEENE_OPERATOR = "*"  # precedence 1
 CONCATENATION = "+"  # precedence 2
@@ -129,14 +129,16 @@ class NFA:
             prev = _
             curr_num_edges = len(edges)
             num_edges += curr_num_edges
-            transitions.append(
-                f"{curr_num_edges} "
-                + " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges)))
+            transaction = f"{curr_num_edges} "
+            if curr_num_edges > 0:
+                transaction += " ".join(map(lambda tpl: f"{tpl[0]} {tpl[1]}", edges)) + " "
+
+            transitions.append(transaction)
         res_trans = "\n".join(transitions)
+
         res = f"""{self.num_states} {len(self.accepting_states)} {num_edges}
 {' '.join(map(str, sorted(self.accepting_states)))}
-{res_trans}
-"""
+{res_trans}"""
         return res
 
 
@@ -219,10 +221,8 @@ def convert_regex_to_postfix_notation(reg_ex: str) -> List:
 
 
 if __name__ == "__main__":
-    # while True:
-    regex = input("Input Regular Expression: ")
-    if regex == "":
-        print("Finished")
+    # with open("TST", 'w') as sys.stdout:
+    regex = input()
     # break
     postfix_que = convert_regex_to_postfix_notation(
         regex.replace(INPUTTED_SIGMA, PROGRAM_SIGMA))

@@ -6,19 +6,19 @@ from functools import reduce
 # N A T
 # Ai
 # Ki S Aj
-def translate_inputted_text() -> tuple[dict[str, list[(int, int), ...]], int]:
-    symbols: dict[str, list[(int, int), ...]] = dict()
+def translate_inputted_text():
+    symbols = dict()
     first_line: str = input()
     n, a, t = map(int, first_line.split())
     second_line: str = input()
-    accepting_states: list[int, ...] = list(map(int, second_line.split()))
+    accepting_states = list(map(int, second_line.split()))
     assert len(accepting_states) == a
     accepting_states.insert(0, 0)
     final: int = reduce(lambda prev, ac: prev | (1 << ac), accepting_states)
     count_edges: int = 0
     for curr_state in range(0, n):
         next_line: str = input()
-        next_states: list[str, ...] = next_line.split()
+        next_states = next_line.split()
         # print(next_states)
         k: int = int(next_states[0])
         assert k == len(next_states) // 2
@@ -26,7 +26,7 @@ def translate_inputted_text() -> tuple[dict[str, list[(int, int), ...]], int]:
         for i in range(1, len(next_states), 2):
             symbol: str = next_states[i]
             state: int = int(next_states[i + 1])
-            char_state: list[(int, int), ...] = symbols.get(symbol, None)
+            char_state = symbols.get(symbol, None)
             if char_state:
                 symbols[symbol].append((1 << curr_state, 1 << state))
             else:
@@ -35,12 +35,12 @@ def translate_inputted_text() -> tuple[dict[str, list[(int, int), ...]], int]:
     return symbols, final
 
 
-def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: int) -> str:
-    result_list: list[str, ...] = []
+def get_result(string: str, symbols, final: int) -> str:
+    result_list = []
     current_state: int = 1  # initial state 0 , (1 << 0)
     # index: int = len(string)
     for index, symbol in enumerate(string):
-        edges: list[(int, int), ...] = symbols.get(symbol)
+        edges = symbols.get(symbol)
         if edges:
             next_state: int = 0
             for edge in edges:
@@ -61,10 +61,7 @@ def get_result(string: str, symbols: dict[str, list[(int, int), ...]], final: in
 
 
 def get_answer():
-    word: str = input("Input word: ")
-    if word == "":
-        print("Finished")
-        return
+    word: str = input()
     symbols, final = translate_inputted_text()
     # print(f"symbols: {symbols}\n final {bin(final)[2:]}")
     return get_result(word, symbols, final)
