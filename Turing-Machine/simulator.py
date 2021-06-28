@@ -10,17 +10,13 @@ class Tape:
         if len(tape_input) == 0:
             tape_input = EMPTY_SYMBOL
         self.right_part = deque(tape_input)
-        self.index = 0
 
     def move_right(self):
-        self.index += 1
         if len(self.right_part) == 1:
             self.right_part.append(EMPTY_SYMBOL)
-
         self.left_part.append(self.right_part.popleft())
 
     def move_left(self):
-        self.index -= 1
         self.right_part.appendleft(self.left_part.pop())
 
     def write(self, new_symbol):
@@ -60,7 +56,7 @@ class TuringMachine:
                     self.tape.move_right()
                 else:
                     self.tape.move_left()
-
+                self.current_state = next_state
             except KeyError:
                 print(REJECT_SYMBOL)
                 return
