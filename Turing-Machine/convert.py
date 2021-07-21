@@ -1,6 +1,5 @@
 from collections import defaultdict
 from typing import List, Dict, Tuple
-import sys
 
 BLANK = '_'
 REJECT_SYMBOL = '-1'
@@ -11,8 +10,8 @@ ONE = '1'
 ZERO_HEAD = 'O'
 ONE_HEAD = 'I'
 BLANK_HEAD = '^'
-RIGHT_DIRECTION = "R"
-LEFT_DIRECTION = "L"
+R = "R"
+L = "L"
 
 TMP = {}
 
@@ -64,53 +63,60 @@ class TM:
     def __str__(self):
         res = f"{len(self.new_moves) + 1}\n"
         for action_list in self.new_moves.values():
-            res += f"{len(action_list)}  {action_list[0].from_state}=> "
+            res += f"{len(action_list)}"
             for act in action_list:
-                res += f"| {act.read_symbols[0]} {act.to_state} {act.write_symbols[0]} {act.directions[0]}"
+                res += f" {act.read_symbols[0]} {act.to_state} {act.write_symbols[0]} {act.directions[0]}"
             res += "\n"
-        return res
+        return res[:-1]
 
     def convert(self):
         self.initialize()
+        # ind = self.start_translate_states(11, 0)
+
+        # first tape
+
+        ind = 11
+        for key in range(0, self.initial_num_states - 1):
+            ind = self.start_translate_states(ind, key)
 
     def initialize(self):
         # move input string right with one unit and write separator symbol
-        self.new_moves[0].append(Action(0, ('0',), 1, (SEPARATOR,), ("R",)))
-        self.new_moves[0].append(Action(0, ('1',), 2, (SEPARATOR,), ("R",)))
-        self.new_moves[1].append(Action(1, ('0',), 3, (ZERO_HEAD,), ("R",)))
-        self.new_moves[1].append(Action(1, ('1',), 4, (ZERO_HEAD,), ("R",)))
-        self.new_moves[2].append(Action(2, ('0',), 3, (ONE_HEAD,), ("R",)))
-        self.new_moves[2].append(Action(2, ('1',), 4, (ONE_HEAD,), ("R",)))
-        self.new_moves[3].append(Action(3, ('0',), 3, ('0',), ("R",)))
-        self.new_moves[3].append(Action(3, ('1',), 4, ('0',), ("R",)))
-        self.new_moves[4].append(Action(4, ('1',), 4, ('1',), ("R",)))
-        self.new_moves[4].append(Action(4, ('0',), 4, ('1',), ("R",)))
-        self.new_moves[3].append(Action(3, (BLANK,), 5, ('0',), ("R",)))
-        self.new_moves[4].append(Action(4, (BLANK,), 5, ('1',), ("R",)))
+
+        self.add_move(0, 1, ZERO, SEPARATOR, R)
+        self.add_move(0, 2, ONE, SEPARATOR, R)
+
+        self.add_move(1, 3, ZERO, ZERO_HEAD, R)
+        self.add_move(1, 4, ONE, ZERO_HEAD, R)
+
+        self.add_move(2, 3, ZERO, ONE_HEAD, R)
+        self.add_move(2, 4, ONE, ONE_HEAD, R)
+
+        self.add_move(3, 3, ZERO, ZERO, R)
+        self.add_move(3, 4, ONE, ZERO, R)
+        self.add_move(3, 5, BLANK, ZERO, R)
+
+        self.add_move(4, 4, ONE, ONE, R)
+        self.add_move(4, 3, ZERO, ONE, R)
+        self.add_move(4, 5, BLANK, ONE, R)
+
         # write separators and blank head symbol for second tape
-        self.new_moves[5].append(Action(5, (BLANK,), 6, (SEPARATOR,), ("R",)))
-        self.new_moves[6].append(Action(6, (BLANK,), 7, (BLANK_HEAD,), ("R",)))
-        self.new_moves[7].append(Action(7, (BLANK,), 8, (SEPARATOR,), ("L",)))
+        self.add_move(5, 6, BLANK, SEPARATOR, R)
+
+        self.add_move(6, 7, BLANK, BLANK_HEAD, R)
+
+        self.add_move(7, 8, BLANK, SEPARATOR, L)
+
+        self.add_move(8, 9, BLANK_HEAD, BLANK_HEAD, L)  # can be cylce
+
+        self.add_move(9, 10, SEPARATOR, SEPARATOR, L)
+
         # move left
-        self.new_moves[8].append(Action(8, (ZERO,), 8, (ZERO,), ("L",)))
-        self.new_moves[8].append(Action(8, (ZERO_HEAD,), 8, (ZERO_HEAD,), ("L",)))
-        self.new_moves[8].append(Action(8, (ONE,), 8, (ONE,), ("L",)))
-        self.new_moves[8].append(Action(8, (ONE_HEAD,), 8, (ONE_HEAD,), ("L",)))
-        self.new_moves[8].append(Action(8, (BLANK_HEAD,), 8, (BLANK_HEAD,), ("L",)))
-
-        self.new_moves[8].append(Action(8, (SEPARATOR,), 9, (SEPARATOR,), ("L",)))
-
-        self.new_moves[9].append(Action(9, (ZERO,), 9, (ZERO,), ("L",)))
-        self.new_moves[9].append(Action(9, (ZERO_HEAD,), 9, (ZERO_HEAD,), ("L",)))
-        self.new_moves[9].append(Action(9, (ONE,), 9, (ONE,), ("L",)))
-        self.new_moves[9].append(Action(9, (ONE_HEAD,), 9, (ONE_HEAD,), ("L",)))
-        self.new_moves[9].append(Action(9, (BLANK_HEAD,), 9, (BLANK_HEAD,), ("L",)))
-
-        # first tape
-        self.new_moves[9].append(Action(9, (SEPARATOR,), 10, (SEPARATOR,), ("R",)))
-        ind = 10
-        for key in range(0, self.initial_num_states - 1):
-            ind = self.start_translate_states(ind, key)
+        self.add_move(10, 10, ZERO, ZERO, L)
+        self.add_move(10, 10, ZERO_HEAD, ZERO_HEAD, L)
+        self.add_move(10, 10, ONE, ONE, L)
+        self.add_move(10, 10, ONE_HEAD, ONE_HEAD, L)
+        self.add_move(10, 10, BLANK_HEAD, BLANK_HEAD, L)
+        self.add_move(10, 11, SEPARATOR, SEPARATOR, R)
 
     def go_right(self, ind: int):
         self.new_moves[ind].append(Action(ind, (ZERO,), ind, (ZERO,), ("R",)))
@@ -127,141 +133,100 @@ class TM:
 
     def copy_all(self, ind: int):
         self.new_moves[ind].append(Action(ind, (SEPARATOR,), ind + 1, (BLANK_HEAD,), ("R",)))
-        for idn, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
+        for i, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
             for j, read_sym in enumerate((ONE, ZERO, BLANK, ONE_HEAD, ZERO_HEAD, BLANK_HEAD)):
-                self.add_move(ind + 1 + idn, ind + 2 + j, read_sym, write_sym, "R")
+                self.add_move(ind + 1 + i, ind + 2 + j, read_sym, write_sym, "R")
 
-        for idn, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
-            self.new_moves[ind + 5 + idn].append(Action(ind + 5 + idn, (SEPARATOR,), ind + 7, (write_sym,), ("R",)))
+        for i, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
+            self.new_moves[ind + 5 + i].append(Action(ind + 5 + i, (SEPARATOR,), ind + 7, (write_sym,), ("R",)))
             for j, read_sym in enumerate((ONE, ZERO, BLANK)):
-                self.add_move(ind + 5 + idn, ind + 2 + j, read_sym, write_sym, "R")
+                self.add_move(ind + 5 + i, ind + 2 + j, read_sym, write_sym, "R")
         self.new_moves[ind + 8].append(Action(ind + 8, (BLANK,), ind + 9, (SEPARATOR,), ("L",)))
         self.go_left(ind + 9)
-        self.new_moves[ind + 9].append(Action(ind + 8, (SEPARATOR,), ind + 10, (SEPARATOR,), ("L",)))
+        self.add_move(ind + 9, ind + 9, BLANK_HEAD, BLANK_HEAD, L)
+        self.add_move(ind + 9, ind + 9, ZERO_HEAD, ZERO_HEAD, L)
+        self.add_move(ind + 9, ind + 9, ONE_HEAD, ONE_HEAD, L)
+        self.add_move(ind + 9, ind + 10, SEPARATOR, SEPARATOR, L)
+
         return 9
 
-    def start_translate_states(self, ind: int, key: int):
-        self.go_right(ind)  # 1
-        # self.new_moves[ind].append(Action(ind, (ZERO,), ind, (ZERO,), ("R",)))
-        # self.new_moves[ind].append(Action(ind, (ONE,), ind, (ONE,), ("R",)))
-        # self.new_moves[ind].append(Action(ind, (BLANK,), ind, (BLANK,), ("R",)))
-
-        inc = 1
+    def start_translate_states(self, index: int, key: int):
+        self.go_right(index)  # 1
+        i = 1
         # Found HEAD-ed symbol
         for first_sym, action_list in self.moves[key].items():
-            self.new_moves[ind].append(Action(ind, (sym_head[first_sym],),
-                                              ind + inc,
-                                              (sym_head[first_sym],),
-                                              ("R",)))
-            self.go_right(ind + inc)  # 1
-            # გაერთიანება შეიძლება
-            self.new_moves[ind + inc].append(Action(ind + inc, (SEPARATOR,), ind + inc + 1, (SEPARATOR,), ("R",)))  # 1
-            inc += 1
-            self.go_right(ind + inc)  # 1
+            # print("ffor key", key, "index", index, "i", i)
+            self.add_move(index, index + i, sym_head[first_sym], sym_head[first_sym], R)
+
+            self.go_right(index + i)  # 1
+            self.add_move(index + i, index + i, SEPARATOR, SEPARATOR, R)
+
+            j = 1
             for action in action_list:
-                self.new_moves[ind + inc].append(Action(ind + inc,
-                                                        (sym_head[action.read_symbols[1]],),
-                                                        ind + inc + 1,
-                                                        (action.write_symbols[1],),
-                                                        (action.directions[1])))
-                # 1
+                # print("sfor key", key, "index", index, "i", i)
+                self.add_move(index + i,
+                              index + i + j,
+                              sym_head[action.read_symbols[1]],
+                              action.write_symbols[1],
+                              action.directions[1])
                 # TODO
                 add = 0
-                if action.directions[1] == RIGHT_DIRECTION:
-                    #    #->^,R
-                    self.new_moves[ind + inc + 1].append(Action(ind + inc + 1,
-                                                                (SEPARATOR,),
-                                                                ind + inc + 2,
-                                                                (BLANK_HEAD,),
-                                                                (RIGHT_DIRECTION,)))
-
-                    #    _->#,L
-                    self.new_moves[ind + inc + 2].append(Action(ind + inc + 2,
-                                                                (BLANK,),
-                                                                ind + inc + 3,
-                                                                (SEPARATOR,),
-                                                                (LEFT_DIRECTION,)))
-                    #    ^->^,L
-                    self.new_moves[ind + inc + 3].append(Action(ind + inc + 3,
-                                                                (BLANK_HEAD,),
-                                                                ind + inc + 4,
-                                                                (BLANK_HEAD,),
-                                                                (LEFT_DIRECTION,)))
+                if action.directions[1] == R:
+                    # ->^,R
+                    self.add_move(index + i + j, index + i + j + 1, SEPARATOR, BLANK_HEAD, R)
+                    # _->#,L
+                    self.add_move(index + i + j + 1, index + i + j + 2, BLANK, SEPARATOR, L)
+                    # ^->^,L
+                    self.add_move(index + i + j + 2, index + i + j + 3, BLANK_HEAD, BLANK_HEAD, L)
                     add = 2
 
                 #    1->1^,L
-                self.new_moves[ind + inc + 1].append(Action(ind + inc + 1,
-                                                            (ONE,),
-                                                            ind + inc + add + 2,
-                                                            (ONE_HEAD,),
-                                                            (LEFT_DIRECTION,)))
+                self.add_move(index + i + j, index + i + j + add + 1, ONE, ONE_HEAD, L)
                 #    0->0^,L
-                self.new_moves[ind + inc + 1].append(Action(ind + inc + 1,
-                                                            (ZERO,),
-                                                            ind + inc + 2 + add,
-                                                            (ZERO_HEAD,),
-                                                            (LEFT_DIRECTION,)))
+                self.add_move(index + i + j, index + i + j + add + 1, ZERO, ZERO_HEAD, L)
                 #    _->^,L
-                self.new_moves[ind + inc + 1].append(Action(ind + inc + 1,
-                                                            (BLANK,),
-                                                            ind + inc + 2 + add,
-                                                            (BLANK_HEAD,),
-                                                            (LEFT_DIRECTION,)))
+                self.add_move(index + i + j, index + i + j + add + 1, BLANK, BLANK_HEAD, L)
 
-                self.go_left(ind + inc + 2 + add)  # 1
-                self.new_moves[ind + inc + 2 + add].append(Action(ind + inc + 2 + add,
-                                                                  (SEPARATOR,),
-                                                                  ind + inc + 2 + add,
-                                                                  (SEPARATOR,),
-                                                                  (LEFT_DIRECTION,)))
-                # 1
+                self.go_left(index + i + j + add + 1)  # 1
+                self.add_move(index + i + j + add + 1, index + i + j + add + 1, SEPARATOR, SEPARATOR, L)
 
                 # f_read -> f_write, f_dir
-                self.new_moves[ind + inc + 2 + add].append(Action(ind + inc + 2 + add,
-                                                                  (sym_head[first_sym],),
-                                                                  ind + inc + 3 + add,
-                                                                  (action.write_symbols[0],),
-                                                                  (action.directions[0],)))
-                if action.directions[0] == RIGHT_DIRECTION:
-                    add += self.copy_all(ind + inc + 3 + add)
+                self.add_move(index + i + j + add + 1, index + i + j + add + 2,
+                              sym_head[first_sym], action.write_symbols[0], action.directions[0])
+                add2 = 0
+                if action.directions[0] == R:
+                    add2 = self.copy_all(index + i + j + 2 + add)
                     # 10
 
                 #    1->1^,L
-                self.new_moves[ind + inc + 3 + add].append(Action(ind + inc + 3 + add,
-                                                                  (ONE,),
-                                                                  ind + inc + 4 + add,
-                                                                  (ONE_HEAD,),
-                                                                  (LEFT_DIRECTION,)))
+                self.add_move(index + i + j + 2 + add, index + i + j + 3 + add + add2, ONE, ONE_HEAD, L)
                 #    0->0^,L
-                self.new_moves[ind + inc + 3 + add].append(Action(ind + inc + 3 + add,
-                                                                  (ZERO,),
-                                                                  ind + inc + 4 + add,
-                                                                  (ZERO_HEAD,),
-                                                                  (LEFT_DIRECTION,)))
+                self.add_move(index + i + j + 2 + add, index + i + j + 3 + add + add2, ZERO, ZERO_HEAD, L)
                 #    _->^,L
-                self.new_moves[ind + inc + 3 + add].append(Action(ind + inc + 3 + add,
-                                                                  (BLANK,),
-                                                                  ind + inc + 4 + add,
-                                                                  (BLANK_HEAD,),
-                                                                  (LEFT_DIRECTION,)))
+                self.add_move(index + i + j + 2 + add, index + i + j + 3 + add + add2, BLANK, BLANK_HEAD, L)
 
-                self.go_left(ind + inc + 4 + add)  # 1
+                self.go_left(index + i + j + 3 + add + add2)  # 1
+                self.add_move(index + i + j + 3 + add + add2, index + i + j + 3 + add + add2, BLANK_HEAD, BLANK_HEAD, L)
+                self.add_move(index + i + j + 3 + add + add2, index + i + j + 3 + add + add2, ZERO_HEAD, ZERO_HEAD, L)
+                self.add_move(index + i + j + 3 + add + add2, index + i + j + 3 + add + add2, ONE_HEAD, ONE_HEAD, L)
+
                 # #->#,R go to the next state
-                self.new_moves[ind + inc + 4 + add].append(Action(ind + inc + 4 + add,
-                                                                  (SEPARATOR,),
-                                                                  TMP[action.to_state],
-                                                                  (SEPARATOR,),
-                                                                  (RIGHT_DIRECTION,)))
-                inc += 4 + add
+                self.add_move(index + i + j + 3 + add + add2, TMP[action.to_state], SEPARATOR, SEPARATOR, R)
+                j += add + add2 + 3
+                # print("sfor key", key, "index", index, "i", i, "j", j)
 
-        return 1
+            i += j + 1
+            # print("ffor key", key, "index", index, "i", i, "j", j)
+
+        # print("new index", index + i+1)
+        return index + i
 
 
 def read_inputted_states():
     n: int = int(input())
     tm: TM = TM(n)
-    prev: int = 10
-    TMP[0] = 10
+    prev: int = 11
+    TMP[0] = 11
     for i in range(n - 1):
         line_i: List[str] = input().split()
         m, *actions = line_i
@@ -275,21 +240,20 @@ def read_inputted_states():
             tm[i][actions[index]].append(act)
         count = 1
         for actions in tm[i].values():
-            count += 2
+            count += 1
             for action in actions:
                 count += 4
-                if action.directions[0] == RIGHT_DIRECTION:
-                    count += 10
-                if action.directions[1] == RIGHT_DIRECTION:
+                if action.directions[0] == R:
+                    count += 9
+                if action.directions[1] == R:
                     count += 2
         prev += count
         #  print(prev) TODO
         TMP[i + 1] = prev
+        # print(i + 1, "->", prev)
     tm.convert()
     print(tm)
 
 
 if __name__ == "__main__":
-    num = 1
-    with open(f"in/{num}", "r") as sys.stdin, open(f"out/{num}", "w") as sys.stdout:
-        read_inputted_states()
+    read_inputted_states()
