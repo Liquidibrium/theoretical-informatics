@@ -247,7 +247,7 @@ def read_inputted_states():
         prev += count
         TMP[i + 1] = prev
     tm.convert()
-    print(str(tm))  # [:-1]
+    print(str(tm)[:-1])
 
 
 if __name__ == "__main__":
