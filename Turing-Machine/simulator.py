@@ -17,8 +17,8 @@ class Tape:
         self.left_part.append(self.right_part.popleft())
 
     def move_left(self):
-        if len(self.left_part) != 0:
-            self.right_part.appendleft(self.left_part.pop())
+        # if len(self.left_part) != 0:
+        self.right_part.appendleft(self.left_part.pop())
 
     def write(self, new_symbol):
         self.right_part[0] = new_symbol

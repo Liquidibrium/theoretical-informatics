@@ -67,7 +67,7 @@ class TM:
             for act in action_list:
                 res += f" {act.read_symbols[0]} {act.to_state} {act.write_symbols[0]} {act.directions[0]}"
             res += "\n"
-        return res[:-1]
+        return res
 
     def convert(self):
         self.initialize()
@@ -138,7 +138,7 @@ class TM:
                 self.add_move(ind + 1 + i, ind + 2 + j, read_sym, write_sym, "R")
 
         for i, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
-            self.new_moves[ind + 5 + i].append(Action(ind + 5 + i, (SEPARATOR,), ind + 7, (write_sym,), ("R",)))
+            self.new_moves[ind + 5 + i].append(Action(ind + 5 + i, (SEPARATOR,), ind + 7 + i, (write_sym,), ("R",)))
             for j, read_sym in enumerate((ONE, ZERO, BLANK)):
                 self.add_move(ind + 5 + i, ind + 2 + j, read_sym, write_sym, "R")
         self.new_moves[ind + 8].append(Action(ind + 8, (BLANK,), ind + 9, (SEPARATOR,), ("L",)))
@@ -152,17 +152,19 @@ class TM:
 
     def start_translate_states(self, index: int, key: int):
         self.go_right(index)  # 1
-        i = 1
+        i = 0
         # Found HEAD-ed symbol
         for first_sym, action_list in self.moves[key].items():
             # print("ffor key", key, "index", index, "i", i)
+            i += 1
             self.add_move(index, index + i, sym_head[first_sym], sym_head[first_sym], R)
 
             self.go_right(index + i)  # 1
             self.add_move(index + i, index + i, SEPARATOR, SEPARATOR, R)
 
-            j = 1
+            j = 0
             for action in action_list:
+                j += 1
                 # print("sfor key", key, "index", index, "i", i)
                 self.add_move(index + i,
                               index + i + j,
@@ -213,13 +215,8 @@ class TM:
                 # #->#,R go to the next state
                 self.add_move(index + i + j + 3 + add + add2, TMP[action.to_state], SEPARATOR, SEPARATOR, R)
                 j += add + add2 + 3
-                # print("sfor key", key, "index", index, "i", i, "j", j)
-
-            i += j + 1
-            # print("ffor key", key, "index", index, "i", i, "j", j)
-
-        # print("new index", index + i+1)
-        return index + i
+            i += j
+        return index + i + 1
 
 
 def read_inputted_states():
@@ -248,11 +245,9 @@ def read_inputted_states():
                 if action.directions[1] == R:
                     count += 2
         prev += count
-        #  print(prev) TODO
         TMP[i + 1] = prev
-        # print(i + 1, "->", prev)
     tm.convert()
-    print(tm)
+    print(str(tm))  # [:-1]
 
 
 if __name__ == "__main__":
