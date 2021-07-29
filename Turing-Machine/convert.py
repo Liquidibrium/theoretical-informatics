@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from typing import List, Dict, Tuple
 
@@ -88,6 +89,9 @@ class TM:
         self.add_move(1, 3, ZERO, ZERO_HEAD, R)
         self.add_move(1, 4, ONE, ZERO_HEAD, R)
 
+        self.add_move(1, 5, BLANK, ZERO_HEAD, R)
+        self.add_move(2, 5, BLANK, ONE_HEAD, R)
+
         self.add_move(2, 3, ZERO, ONE_HEAD, R)
         self.add_move(2, 4, ONE, ONE_HEAD, R)
 
@@ -131,14 +135,15 @@ class TM:
     def add_move(self, from_state: int, to_state: int, read: str, write: str, direction: str):
         self.new_moves[from_state].append(Action(from_state, (read,), to_state, (write,), (direction,)))
 
-    def copy_all(self, ind: int):
-        self.new_moves[ind].append(Action(ind, (SEPARATOR,), ind + 1, (BLANK_HEAD,), ("R",)))
-        for i, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
+    def move(self, ind, tpl):
+        for i, write_sym in enumerate(tpl):
             for j, read_sym in enumerate((ONE, ZERO, BLANK, ONE_HEAD, ZERO_HEAD, BLANK_HEAD)):
                 self.add_move(ind + 1 + i, ind + 2 + j, read_sym, write_sym, "R")
 
-        for i, write_sym in enumerate((SEPARATOR, ONE, ZERO, BLANK)):
-            self.new_moves[ind + 5 + i].append(Action(ind + 5 + i, (SEPARATOR,), ind + 7 + i, (write_sym,), ("R",)))
+        for i, write_sym in enumerate((ONE, ZERO, BLANK, ONE_HEAD, ZERO_HEAD, BLANK_HEAD)):
+            self.add_move(ind + 2 + i, ind + 8, SEPARATOR, write_sym, "R")
+
+        for i, write_sym in enumerate((ONE_HEAD, ZERO_HEAD, BLANK_HEAD)):
             for j, read_sym in enumerate((ONE, ZERO, BLANK)):
                 self.add_move(ind + 5 + i, ind + 2 + j, read_sym, write_sym, "R")
         self.new_moves[ind + 8].append(Action(ind + 8, (BLANK,), ind + 9, (SEPARATOR,), ("L",)))
@@ -148,6 +153,14 @@ class TM:
         self.add_move(ind + 9, ind + 9, ONE_HEAD, ONE_HEAD, L)
         self.add_move(ind + 9, ind + 10, SEPARATOR, SEPARATOR, L)
 
+    def copy_all(self, ind: int):
+        self.new_moves[ind].append(Action(ind, (SEPARATOR,), ind + 1, (BLANK_HEAD,), ("R",)))
+        self.move(ind, (SEPARATOR, ONE, ZERO, BLANK))
+        return 9
+
+    def copy_all2(self, ind: int):
+        self.add_move(ind, ind + 1, SEPARATOR, SEPARATOR, R)
+        self.move(ind, (BLANK, ONE, ZERO, BLANK))
         return 9
 
     def start_translate_states(self, index: int, key: int):
@@ -155,7 +168,6 @@ class TM:
         i = 0
         # Found HEAD-ed symbol
         for first_sym, action_list in self.moves[key].items():
-            # print("ffor key", key, "index", index, "i", i)
             i += 1
             self.add_move(index, index + i, sym_head[first_sym], sym_head[first_sym], R)
 
@@ -165,7 +177,6 @@ class TM:
             j = 0
             for action in action_list:
                 j += 1
-                # print("sfor key", key, "index", index, "i", i)
                 self.add_move(index + i,
                               index + i + j,
                               sym_head[action.read_symbols[1]],
@@ -181,6 +192,8 @@ class TM:
                     # ^->^,L
                     self.add_move(index + i + j + 2, index + i + j + 3, BLANK_HEAD, BLANK_HEAD, L)
                     add = 2
+                else:
+                    add = self.copy_all2(index + i + j)
 
                 #    1->1^,L
                 self.add_move(index + i + j, index + i + j + add + 1, ONE, ONE_HEAD, L)
@@ -244,10 +257,12 @@ def read_inputted_states():
                     count += 9
                 if action.directions[1] == R:
                     count += 2
+                else:
+                    count += 9
         prev += count
         TMP[i + 1] = prev
     tm.convert()
-    print(str(tm)[:-1])
+    print(str(tm))
 
 
 if __name__ == "__main__":
